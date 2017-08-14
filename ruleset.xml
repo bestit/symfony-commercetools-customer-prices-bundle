@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<ruleset name="bestit/commercetools-customer-prices-bundle">
+    <rule ref="PSR2" />
+</ruleset>
+
+
