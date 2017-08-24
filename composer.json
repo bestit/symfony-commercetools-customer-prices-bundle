@@ -8,7 +8,7 @@
     "description": "Provides a commercetools substitute with custom objects to get customer individual prices.",
     "type": "lib",
     "require": {
-        "commercetools/php-sdk": "^1.4",
+        "commercetools/php-sdk": "^1.4 || ^2.0",
         "php": "^7.0",
         "symfony/proxy-manager-bridge": "^3.0",
         "symfony/symfony": "^3.1"
