@@ -143,7 +143,7 @@ class ByUserFactory
 
             array_map(function (CustomObject $object) use ($collection) {
                 $collection->addWithArticleId(
-                    Price::ofMoney(Money::fromArray($object->getValue()[$this->pricesField])),
+                    Price::fromArray($object->getValue()[$this->pricesField]),
                     $object->getValue()[$this->articleField]
                 );
             }, iterator_to_array($allPrices));

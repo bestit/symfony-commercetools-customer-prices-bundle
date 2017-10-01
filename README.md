@@ -12,8 +12,33 @@ So you need a substitute. This bundle will provide you with a substitute based o
     "key": "KEY-1-2",
     "value": {
         "price": {
-            "centAmount": 1234,
-            "currencyCode": "EUR"
+            "value": {
+                "centAmount": 5000,
+                "currencyCode": "EUR"
+            },
+            "tiers": [
+                {
+                    "minimumQuantity": 10,
+                    "value": {
+                        "centAmount": 4000,
+                        "currencyCode": "EUR"
+                    }
+                },
+                {
+                    "minimumQuantity": 20,
+                    "value": {
+                        "centAmount": 3000,
+                        "currencyCode": "EUR"
+                    }
+                },
+               {
+                    "minimumQuantity": 30,
+                    "value": {
+                        "centAmount": 2000,
+                        "currencyCode": "EUR"
+                    }
+                }
+            ]
         },
         "customer": "1",
         "article": "2"
@@ -92,13 +117,13 @@ best_it_ct_customer_prices:
     container:            customer-prices
     fields:
 
-        # Please provide the name of the custom object value field which saves the article id.
+        # Please provide the name of the custom object value field which saves the article id / number.
         article:              article
 
-        # Please provide the name of the custom object value field which saves the customer id.
+        # Please provide the name of the custom object value field which saves the customer id / number.
         customer:             customer
 
-        # Please provide the name of the custom object value field which saves the money objects for the price.
+        # Please provide the name of the custom object value field which saves the price object.
         prices:               prices
 ```
 
