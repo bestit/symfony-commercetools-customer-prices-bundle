@@ -8,7 +8,6 @@ use BestIt\CtCustomerPricesBundle\Model\CustomerInterface;
 use BestIt\CtCustomerPricesBundle\Model\CustomerPriceCollection;
 use Commercetools\Commons\Helper\QueryHelper;
 use Commercetools\Core\Client;
-use Commercetools\Core\Model\Common\Money;
 use Commercetools\Core\Model\Common\Price;
 use Commercetools\Core\Model\CustomObject\CustomObject;
 use Commercetools\Core\Request\CustomObjects\CustomObjectQueryRequest;
@@ -66,6 +65,13 @@ class ByUserFactory
     private $containerName;
 
     /**
+     * Field in the custom object which contains the currency.
+     *
+     * @var string
+     */
+    private $currencyField;
+
+    /**
      * The customer field in the custom objects.
      *
      * @var string
@@ -101,6 +107,7 @@ class ByUserFactory
      * @param Client $client The used commercetools client.
      * @param string $containerName The customer object container to fetch.
      * @param string $customerField The customer field in the custom objects.
+     * @param string $currencyField The currency field in the custom object.
      * @param string $pricesField The name of the field where the prices can be found.
      * @param TokenStorageInterface $tokenStorage Storage to get the authed user.
      * @param QueryHelper $queryHelper
@@ -111,6 +118,7 @@ class ByUserFactory
         Client $client,
         string $containerName,
         string $customerField,
+        string $currencyField,
         string $pricesField,
         TokenStorageInterface $tokenStorage,
         QueryHelper $queryHelper = null
@@ -120,6 +128,7 @@ class ByUserFactory
         $this->client = $client;
         $this->containerName = $containerName;
         $this->customerField = $customerField;
+        $this->currencyField = $currencyField;
         $this->pricesField = $pricesField;
         $this->tokenStorage = $tokenStorage;
         $this->queryHelper = $queryHelper ?? new QueryHelper();
@@ -147,25 +156,34 @@ class ByUserFactory
      * @param CustomerInterface $customer The used customer.
      *
      * @return CustomerPriceCollection
-     * @todo Enable more currencies.
      */
     public function loadPrices(CustomerInterface $customer): CustomerPriceCollection
     {
-        $cacheItem = $this->cache->getItem($cacheKey = $customer->getCustomerIdForArticlePrices() . self::CACHE_SUFFIX);
+        $cacheItem = $this->cache->getItem(
+            $customer->getCustomerIdForArticlePrices()
+            . $customer->getCustomerCurrencyForArticlePrices()
+            . self::CACHE_SUFFIX
+        );
 
         if (!$cacheItem->isHit()) {
             $collection = new CustomerPriceCollection();
 
             $allPrices = $this
-                ->queryHelper
-                ->getAll(
-                    $this->client,
-                    (new CustomObjectQueryRequest())
-                        ->where(sprintf('container="%s"', $this->containerName))
-                        ->where(
-                            sprintf('value(%s="%s")', $this->customerField, $customer->getCustomerIdForArticlePrices())
+                ->queryHelper->getAll(
+                $this->client,
+                (new CustomObjectQueryRequest())
+                    ->where(sprintf('container="%s"', $this->containerName))
+                    ->where(
+                        sprintf('value(%s="%s")', $this->customerField, $customer->getCustomerIdForArticlePrices()
+                    )
+            )->where(
+                        sprintf(
+                            'value(%s="%s")',
+                            $this->currencyField,
+                            $customer->getCustomerCurrencyForArticlePrices()
                         )
-                );
+                    )
+            );
 
             array_map(function (CustomObject $object) use ($collection) {
                 $collection->addWithArticleId(

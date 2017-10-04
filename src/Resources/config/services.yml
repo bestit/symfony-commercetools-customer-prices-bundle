@@ -12,6 +12,7 @@ services:
             - '@best_it_ct_customer_prices.commercetools_client'
             - '%best_it_ct_customer_prices.container%'
             - '%best_it_ct_customer_prices.fields.customer%'
+            - '%best_it_ct_customer_prices.fields.currency%'
             - '%best_it_ct_customer_prices.fields.prices%'
             - '@security.token_storage'
         public: false

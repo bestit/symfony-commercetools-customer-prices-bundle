@@ -55,6 +55,13 @@ class Configuration implements ConfigurationInterface
                                 'customer id.'
                             )
                         ->end()
+                        ->scalarNode('currency')
+                            ->defaultValue('currency')
+                            ->info(
+                                'Please provide the name of the custom object value field which saves the ' .
+                                'currency.'
+                            )
+                        ->end()
                         ->scalarNode('prices')
                             ->defaultValue('prices')
                             ->info(

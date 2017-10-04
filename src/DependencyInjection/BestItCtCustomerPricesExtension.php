@@ -27,6 +27,7 @@ class BestItCtCustomerPricesExtension extends Extension
         $container->setParameter('best_it_ct_customer_prices.container', $config['container']);
         $container->setParameter('best_it_ct_customer_prices.fields.article', $config['fields']['article']);
         $container->setParameter('best_it_ct_customer_prices.fields.customer', $config['fields']['customer']);
+        $container->setParameter('best_it_ct_customer_prices.fields.currency', $config['fields']['currency']);
         $container->setParameter('best_it_ct_customer_prices.fields.prices', $config['fields']['prices']);
 
         $container->setAlias('best_it_ct_customer_prices.cache_adapter', $config['cache_service_id']);

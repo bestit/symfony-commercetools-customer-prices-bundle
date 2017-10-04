@@ -41,7 +41,8 @@ So you need a substitute. This bundle will provide you with a substitute based o
             ]
         },
         "customer": "1",
-        "article": "2"
+        "article": "2",
+        "currency": "EUR"
     },
     "createdAt": "2017-08-04T06:51:44.642Z",
     "lastModifiedAt": "2017-08-14T00:04:08.763Z"
@@ -122,6 +123,9 @@ best_it_ct_customer_prices:
 
         # Please provide the name of the custom object value field which saves the customer id / number.
         customer:             customer
+                
+        # Please provide the name of the custom object value field which saves the currency.
+        currency:             currency
 
         # Please provide the name of the custom object value field which saves the price object.
         prices:               prices
