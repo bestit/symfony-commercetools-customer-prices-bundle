@@ -135,4 +135,3 @@ Please implement the **BestIt\CtCustomerPricesBundle\Model\CustomerInterface** o
 ## ToDos
 
 * More Docs
-* Unittesting

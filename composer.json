@@ -4,6 +4,11 @@
             "BestIt\\CtCustomerPricesBundle\\": "src/"
         }
     },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\BestIt\\CtCustomerPricesBundle\\": "tests/"
+        }
+    },
     "name": "bestit/commercetools-customer-prices-bundle",
     "description": "Provides a commercetools substitute with custom objects to get customer individual prices.",
     "type": "lib",
@@ -15,8 +20,9 @@
     },
     "require-dev": {
         "squizlabs/php_codesniffer": "^2.6",
-        "phpunit/phpunit": "^5.5",
-        "matthiasnoback/symfony-dependency-injection-test": "^1.0"
+        "phpunit/phpunit": "^6.0",
+        "matthiasnoback/symfony-dependency-injection-test": "^2.1",
+        "matthiasnoback/symfony-config-test": "^3.0"
     },
     "license": "MIT",
     "authors": [
