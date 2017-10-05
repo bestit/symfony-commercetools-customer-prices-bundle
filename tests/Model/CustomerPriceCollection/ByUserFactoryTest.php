@@ -37,6 +37,7 @@ class ByUserFactoryTest extends TestCase
             $clientMock = $this->createMock(Client::class),
             $containerName = (string) random_int(1000, 9999),
             $customerField = (string) random_int(1000, 9999),
+            $currencyField = (string) random_int(1000, 9999),
             $priceField = (string) random_int(1000, 9999),
             $tokenStorageMock = $this->createMock(TokenStorageInterface::class)
         );
@@ -55,6 +56,7 @@ class ByUserFactoryTest extends TestCase
             $clientMock = $this->createMock(Client::class),
             $containerName = (string) random_int(1000, 9999),
             $customerField = (string) random_int(1000, 9999),
+            $currencyField = (string) random_int(1000, 9999),
             $priceField = (string) random_int(1000, 9999),
             $tokenStorageMock = $this->createMock(TokenStorageInterface::class)
         );
@@ -99,6 +101,7 @@ class ByUserFactoryTest extends TestCase
             $clientMock = $this->createMock(Client::class),
             $containerName = (string) random_int(1000, 9999),
             $customerField = (string) random_int(1000, 9999),
+            $currencyField = (string) random_int(1000, 9999),
             $priceField = (string) random_int(1000, 9999),
             $tokenStorageMock = $this->createMock(TokenStorageInterface::class),
             $queryHelperMock = $this->createMock(QueryHelper::class)

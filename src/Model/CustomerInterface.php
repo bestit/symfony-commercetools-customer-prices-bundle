@@ -16,4 +16,10 @@ interface CustomerInterface
      * @return string
      */
     public function getCustomerIdForArticlePrices(): string;
+
+    /**
+     * Returns the currency for the customer.
+     * @return string
+     */
+    public function getCustomerCurrencyForArticlePrices(): string;
 }

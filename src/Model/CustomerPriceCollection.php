@@ -36,11 +36,9 @@ class CustomerPriceCollection extends PriceCollection
     /**
      * Returns the price by its currency.
      * @param string $articleId The search article id.
-     * @param string $currency
      * @return Price|null
-     * @todo Implement the currency!
      */
-    public function getByArticle(string $articleId, string $currency = '')
+    public function getByArticle(string $articleId)
     {
         return $this->getBy(self::INDEX_KEY_ARTICLE_NO, $articleId);
     }
