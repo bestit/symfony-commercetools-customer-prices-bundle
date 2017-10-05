@@ -17,6 +17,7 @@ use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInt
 
 /**
  * Loads a price list out of the custom objects for the given customer.
+ *
  * @author blange <lange@bestit-online.de>
  * @package BestIt\CtCustomerPricesBundle\Model\CustomerPriceCollection
  */
@@ -24,60 +25,77 @@ class ByUserFactory
 {
     /**
      * The cache suffix.
+     *
      * @var string
      */
     const CACHE_SUFFIX = '-customer-prices';
 
     /**
      * The default cache time for the price collections.
+     *
      * @var int
      */
     const DEFAULT_CACHE_TIME = 3600;
 
     /**
      * Where to find the article id.
+     *
      * @var string
      */
     private $articleField;
 
     /**
      * The used cache.
+     *
      * @var AdapterInterface
      */
     private $cache;
 
     /**
      * The used commercetools client.
+     *
      * @var Client
      */
     private $client;
 
     /**
      * The customer object container to fetch.
+     *
      * @var string
      */
     private $containerName;
 
     /**
      * The customer field in the custom objects.
+     *
      * @var string
      */
     private $customerField;
 
     /**
      * The name of the field where the prices can be found.
+     *
      * @var string
      */
     private $pricesField;
 
     /**
+     * Helper to execute queries.
+     *
+     * @var QueryHelper
+     */
+    private $queryHelper;
+
+    /**
      * Storage to get the authed user.
+     *
      * @var TokenStorageInterface
      */
     private $tokenStorage;
 
     /**
      * ByUserFactory constructor.
+     *
      * @param AdapterInterface $cache The used cache.
      * @param string $articleField In which field can the article id be found?
      * @param Client $client The used commercetools client.
@@ -85,6 +103,7 @@ class ByUserFactory
      * @param string $customerField The customer field in the custom objects.
      * @param string $pricesField The name of the field where the prices can be found.
      * @param TokenStorageInterface $tokenStorage Storage to get the authed user.
+     * @param QueryHelper $queryHelper
      */
     public function __construct(
         AdapterInterface $cache,
@@ -93,7 +112,8 @@ class ByUserFactory
         string $containerName,
         string $customerField,
         string $pricesField,
-        TokenStorageInterface $tokenStorage
+        TokenStorageInterface $tokenStorage,
+        QueryHelper $queryHelper = null
     ) {
         $this->articleField = $articleField;
         $this->cache = $cache;
@@ -102,10 +122,12 @@ class ByUserFactory
         $this->customerField = $customerField;
         $this->pricesField = $pricesField;
         $this->tokenStorage = $tokenStorage;
+        $this->queryHelper = $queryHelper ?? new QueryHelper();
     }
 
     /**
      * Creates a collection and loads it with the user data if there is a authed user.
+     *
      * @return CustomerPriceCollection
      */
     public function createPriceCollection()
@@ -121,7 +143,9 @@ class ByUserFactory
 
     /**
      * Loads the price collection of the customer and injects the synthetic service.
+     *
      * @param CustomerInterface $customer The used customer.
+     *
      * @return CustomerPriceCollection
      * @todo Enable more currencies.
      */
@@ -132,14 +156,16 @@ class ByUserFactory
         if (!$cacheItem->isHit()) {
             $collection = new CustomerPriceCollection();
 
-            $allPrices = (new QueryHelper())->getAll(
-                $this->client,
-                (new CustomObjectQueryRequest())
-                    ->where(sprintf('container="%s"', $this->containerName))
-                    ->where(
-                        sprintf('value(%s="%s")', $this->customerField, $customer->getCustomerIdForArticlePrices())
-                    )
-            );
+            $allPrices = $this
+                ->queryHelper
+                ->getAll(
+                    $this->client,
+                    (new CustomObjectQueryRequest())
+                        ->where(sprintf('container="%s"', $this->containerName))
+                        ->where(
+                            sprintf('value(%s="%s")', $this->customerField, $customer->getCustomerIdForArticlePrices())
+                        )
+                );
 
             array_map(function (CustomObject $object) use ($collection) {
                 $collection->addWithArticleId(
