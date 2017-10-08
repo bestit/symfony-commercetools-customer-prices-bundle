@@ -6,21 +6,22 @@ namespace BestIt\CtCustomerPricesBundle\Model;
 
 /**
  * Helps you with the customer price collection.
+ *
  * @author blange <lange@bestit-online.de>
  * @package BestIt\CtCustomerPricesBundle\Model
  */
 trait CustomerPriceCollectionAwareTrait
 {
     /**
-     * The collection of the customer prices.
-     * @var CustomerPriceCollection
+     * @var CustomerPriceCollection|null The collection of the customer prices.
      */
-    private $customerPriceCollection;
+    protected $customerPriceCollection;
 
     /**
      * Returns the collection of the customer prices.
      *
      * We used a getter to help you with strict typing!
+     *
      * @return CustomerPriceCollection
      */
     public function getCustomerPriceCollection(): CustomerPriceCollection
@@ -34,7 +35,7 @@ trait CustomerPriceCollectionAwareTrait
      * @param CustomerPriceCollection $customerPriceCollection
      * @return $this
      */
-    public function setCustomerPriceCollection(CustomerPriceCollection $customerPriceCollection)
+    public function setCustomerPriceCollection(CustomerPriceCollection $customerPriceCollection): self
     {
         $this->customerPriceCollection = $customerPriceCollection;
 
