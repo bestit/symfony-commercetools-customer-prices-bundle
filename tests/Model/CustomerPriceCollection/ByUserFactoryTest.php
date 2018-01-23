@@ -27,18 +27,45 @@ use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 class ByUserFactoryTest extends TestCase
 {
     /**
+     * The fields
+     *
+     * @var array
+     */
+    private $fields = [];
+
+    /**
+     * The query
+     *
+     * @var string
+     */
+    private $query;
+
+    /**
+     * {@inheritdoc}
+     */
+    protected function setUp()
+    {
+        $this->query = 'container="{container}-{currencyValue}-{customerValue}"';
+
+        $this->fields = [
+            'article' => random_int(1000, 9999),
+            'customer' => random_int(1000, 9999),
+            'currency' => random_int(1000, 9999),
+            'prices' => random_int(1000, 9999)
+        ];
+    }
+
+    /**
      * Test for createPriceCollection function.
      */
     public function testCreatePriceCollectionWithoutUser()
     {
         $fixture = new ByUserFactory(
             $cacheMock = $this->createMock(AdapterInterface::class),
-            $articleField = (string) random_int(1000, 9999),
+            $this->fields,
+            $this->query,
             $clientMock = $this->createMock(Client::class),
-            $containerName = (string) random_int(1000, 9999),
-            $customerField = (string) random_int(1000, 9999),
-            $currencyField = (string) random_int(1000, 9999),
-            $priceField = (string) random_int(1000, 9999),
+            $containerName = (string)random_int(1000, 9999),
             $tokenStorageMock = $this->createMock(TokenStorageInterface::class)
         );
 
@@ -52,12 +79,10 @@ class ByUserFactoryTest extends TestCase
     {
         $fixture = new ByUserFactory(
             $cacheMock = $this->createMock(AdapterInterface::class),
-            $articleField = (string) random_int(1000, 9999),
+            $this->fields,
+            $this->query,
             $clientMock = $this->createMock(Client::class),
-            $containerName = (string) random_int(1000, 9999),
-            $customerField = (string) random_int(1000, 9999),
-            $currencyField = (string) random_int(1000, 9999),
-            $priceField = (string) random_int(1000, 9999),
+            $containerName = (string)random_int(1000, 9999),
             $tokenStorageMock = $this->createMock(TokenStorageInterface::class)
         );
 
@@ -97,12 +122,10 @@ class ByUserFactoryTest extends TestCase
     {
         $fixture = new ByUserFactory(
             $cacheMock = $this->createMock(AdapterInterface::class),
-            $articleField = (string) random_int(1000, 9999),
+            $this->fields,
+            $this->query,
             $clientMock = $this->createMock(Client::class),
-            $containerName = (string) random_int(1000, 9999),
-            $customerField = (string) random_int(1000, 9999),
-            $currencyField = (string) random_int(1000, 9999),
-            $priceField = (string) random_int(1000, 9999),
+            $containerName = (string)random_int(1000, 9999),
             $tokenStorageMock = $this->createMock(TokenStorageInterface::class),
             $queryHelperMock = $this->createMock(QueryHelper::class)
         );
@@ -139,13 +162,16 @@ class ByUserFactoryTest extends TestCase
         $userMock = $this->createMock(CustomerInterface::class);
         $userMock
             ->method('getCustomerIdForArticlePrices')
-            ->willReturn($customerId = (string) random_int(1000, 9999));
+            ->willReturn($customerId = (string)random_int(1000, 9999));
+        $userMock
+            ->method('getCustomerCurrencyForArticlePrices')
+            ->willReturn($currency = (string)random_int(1000, 9999));
 
         $customObject = CustomObject::fromArray([
             'key' => '123',
             'value' => [
-                $articleField => '123',
-                $priceField => [
+                $this->fields['article'] => '123',
+                $this->fields['prices'] => [
                     'value' => [
                         'centAmount' => 1000,
                         'currencyCode' => 'EUR'
@@ -159,7 +185,7 @@ class ByUserFactoryTest extends TestCase
             ->with(
                 $clientMock,
                 self::callback(
-                    function (CustomObjectQueryRequest $request) use ($containerName, $customerField, $customerId) {
+                    function (CustomObjectQueryRequest $request) use ($containerName, $currency, $customerId) {
                         $reflectionObject = new ReflectionObject($request);
                         $paramsProperty = $reflectionObject->getProperty('params');
                         $paramsProperty->setAccessible(true);
@@ -167,13 +193,8 @@ class ByUserFactoryTest extends TestCase
                         $params = $paramsProperty->getValue($request);
 
                         self::assertSame(
-                            'container="' . $containerName . '"',
-                            $params['where=container%3D%22' . $containerName . '%22']->getValue()
-                        );
-
-                        self::assertSame(
-                            'value(' . $customerField . '="' . $customerId . '")',
-                            $params['where=value%28' . $customerField . '%3D%22' . $customerId . '%22%29']->getValue()
+                            'container="' . $containerName . '-'. $currency .'-'. $customerId . '"',
+                            current($params)->getValue()
                         );
 
                         return true;

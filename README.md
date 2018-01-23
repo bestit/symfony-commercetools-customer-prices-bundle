@@ -103,6 +103,20 @@ class AppKernel extends Kernel
 ```
 
 ### Step 3: Configure the bundle
+You can define a custom query for searching your custom objects. The following default query will be used
+if you not set this field: `container="{container}-{currencyValue}-{customerValue}"`
+
+You can use placeholders for your query:
+
+| Placeholder     | Description                                       | Example        |
+|-----------------|---------------------------------------------------|----------------|
+| {container}     | Your custom object container name                 | customer-price |
+| {articleField}  | Your custom object field name for article number  | sku            |
+| {customerField} | Your custom object field name for customer number | customerNumber |
+| {currencyField} | Your custom object field name for currency        | currency       |
+| {pricesField}   | Your custom object field name for prices          | prices         |
+| {customerValue} | Your current customer number                      | MA4785         |
+| {currencyValue} | Your current currency                             | EUR            |
 
 ```yaml
 # Default configuration for extension with alias: "best_it_ct_customer_prices"
@@ -113,6 +127,9 @@ best_it_ct_customer_prices:
 
     # Please provide the service id for your commercetools client.
     client_service_id:    ~ # Required
+    
+    # Please provide the search query. You can use placeholder in your query
+    query: 'container="customer-prices-{currencyValue}-{customerValue}"'
 
     # Please provide the name of the custom object container where the prices are saved.
     container:            customer-prices

@@ -37,11 +37,18 @@ class ByUserFactory
     const DEFAULT_CACHE_TIME = 3600;
 
     /**
-     * Where to find the article id.
+     * Array for given fields
      *
      * @var string
      */
-    private $articleField;
+    private $fields;
+
+    /**
+     * The search query
+     *
+     * @var string
+     */
+    private $query;
 
     /**
      * The used cache.
@@ -65,27 +72,6 @@ class ByUserFactory
     private $containerName;
 
     /**
-     * Field in the custom object which contains the currency.
-     *
-     * @var string
-     */
-    private $currencyField;
-
-    /**
-     * The customer field in the custom objects.
-     *
-     * @var string
-     */
-    private $customerField;
-
-    /**
-     * The name of the field where the prices can be found.
-     *
-     * @var string
-     */
-    private $pricesField;
-
-    /**
      * Helper to execute queries.
      *
      * @var QueryHelper
@@ -103,33 +89,27 @@ class ByUserFactory
      * ByUserFactory constructor.
      *
      * @param AdapterInterface $cache The used cache.
-     * @param string $articleField In which field can the article id be found?
+     * @param array $fields
+     * @param string $query
      * @param Client $client The used commercetools client.
      * @param string $containerName The customer object container to fetch.
-     * @param string $customerField The customer field in the custom objects.
-     * @param string $currencyField The currency field in the custom object.
-     * @param string $pricesField The name of the field where the prices can be found.
      * @param TokenStorageInterface $tokenStorage Storage to get the authed user.
      * @param QueryHelper $queryHelper
      */
     public function __construct(
         AdapterInterface $cache,
-        string $articleField,
+        array $fields,
+        string $query,
         Client $client,
         string $containerName,
-        string $customerField,
-        string $currencyField,
-        string $pricesField,
         TokenStorageInterface $tokenStorage,
         QueryHelper $queryHelper = null
     ) {
-        $this->articleField = $articleField;
+        $this->fields = $fields;
+        $this->query = $query;
         $this->cache = $cache;
         $this->client = $client;
         $this->containerName = $containerName;
-        $this->customerField = $customerField;
-        $this->currencyField = $currencyField;
-        $this->pricesField = $pricesField;
         $this->tokenStorage = $tokenStorage;
         $this->queryHelper = $queryHelper ?? new QueryHelper();
     }
@@ -168,27 +148,41 @@ class ByUserFactory
         if (!$cacheItem->isHit()) {
             $collection = new CustomerPriceCollection();
 
+            // Replace all *Field vars
+            $query = str_replace(
+                array_map(function ($key) {
+                    return '{' . $key . 'Field}';
+                }, array_keys($this->fields)),
+                array_values($this->fields),
+                $this->query
+            );
+
+            // Replace all *Value vars
+            $variables = [
+                'customer' => $customer->getCustomerIdForArticlePrices(),
+                'currency' => $customer->getCustomerCurrencyForArticlePrices()
+            ];
+            $query = str_replace(
+                array_map(function ($key) {
+                    return '{' . $key . 'Value}';
+                }, array_keys($variables)),
+                array_values($variables),
+                $query
+            );
+
+            // Replace other vars
+            $query = str_replace('{container}', $this->containerName, $query);
+
             $allPrices = $this
                 ->queryHelper->getAll(
                 $this->client,
-                (new CustomObjectQueryRequest())
-                    ->where(sprintf('container="%s"', $this->containerName))
-                    ->where(
-                        sprintf('value(%s="%s")', $this->customerField, $customer->getCustomerIdForArticlePrices()
-                    )
-            )->where(
-                        sprintf(
-                            'value(%s="%s")',
-                            $this->currencyField,
-                            $customer->getCustomerCurrencyForArticlePrices()
-                        )
-                    )
+                (new CustomObjectQueryRequest())->where($query)
             );
 
             array_map(function (CustomObject $object) use ($collection) {
                 $collection->addWithArticleId(
-                    Price::fromArray($object->getValue()[$this->pricesField]),
-                    $object->getValue()[$this->articleField]
+                    Price::fromArray($object->getValue()[$this->fields['prices']]),
+                    $object->getValue()[$this->fields['article']]
                 );
             }, iterator_to_array($allPrices));
 
