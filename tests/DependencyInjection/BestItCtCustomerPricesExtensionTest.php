@@ -49,6 +49,7 @@ class BestItCtCustomerPricesExtensionTest extends AbstractExtensionTestCase
 
         $config = [
             'container' => (string) random_int(10000, 99999),
+            'query' => (string) random_int(10000, 99999),
             'fields' => [
                 'article' => (string) random_int(10000, 99999),
                 'customer' => (string) random_int(10000, 99999),
@@ -91,6 +92,7 @@ class BestItCtCustomerPricesExtensionTest extends AbstractExtensionTestCase
         $config = [
             [
                 'container' => $container = (string) random_int(10000, 99999),
+                'query' => $query = (string) random_int(10000, 99999),
                 'fields' => [
                     'article' => $article = (string) random_int(10000, 99999),
                     'customer' => $customer = (string) random_int(10000, 99999),
@@ -112,30 +114,25 @@ class BestItCtCustomerPricesExtensionTest extends AbstractExtensionTestCase
         $containerMock
             ->expects(self::at(1))
             ->method('setParameter')
-            ->with('best_it_ct_customer_prices.fields.article', $article);
+            ->with('best_it_ct_customer_prices.fields', [
+                'article' => $article,
+                'customer' => $customer,
+                'currency' => $currency,
+                'prices' => $prices
+            ]);
 
         $containerMock
             ->expects(self::at(2))
             ->method('setParameter')
-            ->with('best_it_ct_customer_prices.fields.customer', $customer);
+            ->with('best_it_ct_customer_prices.query', $query);
 
         $containerMock
             ->expects(self::at(3))
-            ->method('setParameter')
-            ->with('best_it_ct_customer_prices.fields.currency', $currency);
-
-        $containerMock
-            ->expects(self::at(4))
-            ->method('setParameter')
-            ->with('best_it_ct_customer_prices.fields.prices', $prices);
-
-        $containerMock
-            ->expects(self::at(5))
             ->method('setAlias')
             ->with('best_it_ct_customer_prices.cache_adapter', $cacheServiceId);
 
         $containerMock
-            ->expects(self::at(6))
+            ->expects(self::at(4))
             ->method('setAlias')
             ->with('best_it_ct_customer_prices.commercetools_client', $clientServiceId);
 
