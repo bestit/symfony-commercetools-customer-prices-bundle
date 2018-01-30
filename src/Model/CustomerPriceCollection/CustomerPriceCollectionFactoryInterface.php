@@ -23,4 +23,13 @@ interface CustomerPriceCollectionFactoryInterface
      * @return CustomerPriceCollection
      */
     public function loadPrices(CustomerInterface $customer): CustomerPriceCollection;
+
+    /**
+     * Sets the used batch size for custom object requests.
+     *
+     * @param int $batchSize
+     *
+     * @return $this
+     */
+    public function setBatchSize(int $batchSize);
 }

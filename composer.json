@@ -26,6 +26,9 @@
         "matthiasnoback/symfony-dependency-injection-test": "^2.1",
         "matthiasnoback/symfony-config-test": "^3.0"
     },
+    "suggest": {
+        "ocramius/proxy-manager": "Makes the price collection a lazy service."
+    },
     "license": "MIT",
     "authors": [
         {

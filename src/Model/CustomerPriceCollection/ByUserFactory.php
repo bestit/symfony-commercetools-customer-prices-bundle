@@ -6,10 +6,10 @@ namespace BestIt\CtCustomerPricesBundle\Model\CustomerPriceCollection;
 
 use BestIt\CtCustomerPricesBundle\Model\CustomerInterface;
 use BestIt\CtCustomerPricesBundle\Model\CustomerPriceCollection;
-use Commercetools\Commons\Helper\QueryHelper;
 use Commercetools\Core\Client;
 use Symfony\Component\Cache\Adapter\AdapterInterface;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
+use Symfony\Component\Stopwatch\Stopwatch;
 
 /**
  * Loads a price list out of the custom objects for current user.
@@ -34,7 +34,7 @@ class ByUserFactory extends CustomerPriceCollectionFactory
      * @param string $query
      * @param Client $client The used commercetools client.
      * @param string $containerName The customer object container to fetch.
-     * @param QueryHelper|null $queryHelper
+     * @param Stopwatch $stopwatch
      * @param TokenStorageInterface $tokenStorage
      */
     public function __construct(
@@ -43,10 +43,10 @@ class ByUserFactory extends CustomerPriceCollectionFactory
         string $query,
         Client $client,
         string $containerName,
-        QueryHelper $queryHelper = null,
+        Stopwatch $stopwatch = null,
         TokenStorageInterface $tokenStorage
     ) {
-        parent::__construct($cache, $fields, $query, $client, $containerName, $queryHelper);
+        parent::__construct($cache, $fields, $query, $client, $containerName, $stopwatch);
 
         $this->tokenStorage = $tokenStorage;
     }

@@ -12,7 +12,7 @@ services:
             - '%best_it_ct_customer_prices.query%'
             - '@best_it_ct_customer_prices.commercetools_client'
             - '%best_it_ct_customer_prices.container%'
-            - ~
+            - '@?debug.stopwatch'
 
     best_it_ct_customer_prices.model_customer_price_collection.by_user_factory:
         class: BestIt\CtCustomerPricesBundle\Model\CustomerPriceCollection\ByUserFactory

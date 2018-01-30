@@ -9,12 +9,10 @@ use Commercetools\Commons\Helper\QueryHelper;
 use Commercetools\Core\Client;
 use Commercetools\Core\Model\CustomObject\CustomObject;
 use Commercetools\Core\Request\CustomObjects\CustomObjectQueryRequest;
-use Commercetools\Core\Request\Query\MultiParameter;
+use Commercetools\Core\Response\PagedQueryResponse;
 use PHPUnit\Framework\TestCase;
 use Psr\Cache\CacheItemInterface;
 use Symfony\Component\Cache\Adapter\AdapterInterface;
-use \ReflectionObject;
-use \ArrayObject;
 
 /**
  * Test for CustomerPriceCollectionFactory
@@ -51,6 +49,24 @@ class CustomerPriceCollectionFactoryTest extends TestCase
             'currency' => random_int(1000, 9999),
             'prices' => random_int(1000, 9999)
         ];
+    }
+
+    /**
+     * Checks the default return of the getter.
+     *
+     * @return void
+     */
+    public function testGetBatchSizeDefault()
+    {
+        $fixture = new CustomerPriceCollectionFactory(
+            $this->createMock(AdapterInterface::class),
+            $this->fields,
+            $this->query,
+            $this->createMock(Client::class),
+            (string)random_int(1000, 9999)
+        );
+
+        static::assertSame(QueryHelper::DEFAULT_PAGE_SIZE, $fixture->getBatchSize());
     }
 
     /**
@@ -93,6 +109,8 @@ class CustomerPriceCollectionFactoryTest extends TestCase
 
     /**
      * Test to load prices.
+     *
+     * @return void
      */
     public function testLoadPrices()
     {
@@ -101,14 +119,14 @@ class CustomerPriceCollectionFactoryTest extends TestCase
             $this->fields,
             $this->query,
             $clientMock = $this->createMock(Client::class),
-            $containerName = (string)random_int(1000, 9999),
-            $queryHelperMock = $this->createMock(QueryHelper::class)
+            $containerName = (string)random_int(1000, 9999)
         );
 
         $cacheItemMock = $this->createMock(CacheItemInterface::class);
         $cacheItemMock
             ->method('isHit')
             ->willReturn(false);
+
         $cacheItemMock
             ->method('set')
             ->with(self::callback(
@@ -122,10 +140,12 @@ class CustomerPriceCollectionFactoryTest extends TestCase
                 }
             ))
             ->willReturn($cacheItemMock);
+
         $cacheItemMock
             ->method('expiresAfter')
             ->with(CustomerPriceCollectionFactory::DEFAULT_CACHE_TIME)
             ->willReturn($cacheItemMock);
+
         $cacheItemMock
             ->method('get')
             ->willReturn($priceCollection = $this->createMock(CustomerPriceCollection::class));
@@ -135,14 +155,17 @@ class CustomerPriceCollectionFactoryTest extends TestCase
             ->willReturn($cacheItemMock);
 
         $userMock = $this->createMock(CustomerInterface::class);
+
         $userMock
             ->method('getCustomerIdForArticlePrices')
             ->willReturn($customerId = (string)random_int(1000, 9999));
+
         $userMock
             ->method('getCustomerCurrencyForArticlePrices')
             ->willReturn($currency = (string)random_int(1000, 9999));
 
         $customObject = CustomObject::fromArray([
+            'id' => $firstObjectId = uniqid(),
             'key' => '123',
             'value' => [
                 $this->fields['article'] => '123',
@@ -155,29 +178,60 @@ class CustomerPriceCollectionFactoryTest extends TestCase
             ]
         ]);
 
-        $queryHelperMock
-            ->method('getAll')
-            ->with(
-                $clientMock,
-                self::callback(
-                    function (CustomObjectQueryRequest $request) use ($containerName, $currency, $customerId) {
-                        $reflectionObject = new ReflectionObject($request);
-                        $paramsProperty = $reflectionObject->getProperty('params');
-                        $paramsProperty->setAccessible(true);
-                        /** @var MultiParameter[] $params */
-                        $params = $paramsProperty->getValue($request);
+        $clientMock
+            ->expects(static::at(0))
+            ->method('execute')
+            ->with(self::callback(function ($request) use ($containerName, $customerId, $currency) {
+                /** @var CustomObjectQueryRequest $request */
+                static::assertInstanceOf(CustomObjectQueryRequest::class, $request, 'Wrong instance. (1)');
+                static::assertSame(
+                    http_build_query([
+                        'limit' => 1,
+                        'sort' => 'id',
+                        'where' => sprintf('container="%s-%s-%s"', $containerName, $currency, $customerId),
+                        'withTotal' => 'false'
+                    ]),
+                    $request->httpRequest()->getUri()->getQuery(),
+                    'Wrong Query.'
+                );
 
-                        self::assertSame(
-                            'container="' . $containerName . '-'. $currency .'-'. $customerId . '"',
-                            current($params)->getValue()
-                        );
+                return true;
+            }))
+            ->willReturn($responseMock1 = $this->createMock(PagedQueryResponse::class));
 
-                        return true;
-                    }
-                )
-            )
-            ->willReturn(new ArrayObject([$customObject]));
+        $responseMock1
+            ->expects(static::once())
+            ->method('toArray')
+            ->willReturn(['results' => [$customObject->toArray()]]);
 
-        self::assertSame($priceCollection, $fixture->loadPrices($userMock));
+        $clientMock
+            ->expects(static::at(1))
+            ->method('execute')
+            ->with(self::callback(function ($request) use ($containerName, $customerId, $currency, $firstObjectId) {
+                /** @var CustomObjectQueryRequest $request */
+                static::assertInstanceOf(CustomObjectQueryRequest::class, $request, 'Wrong instance. (1)');
+                static::assertSame(
+                    sprintf(
+                        'limit=%d&sort=id&where=container%%3D%%22%d-%d-%d%%22&where=id+%%3E+%%22%s%%22&withTotal=false',
+                        1,
+                        $containerName,
+                        $currency,
+                        $customerId,
+                        $firstObjectId
+                    ),
+                    $request->httpRequest()->getUri()->getQuery(),
+                    'Wrong Query.'
+                );
+
+                return true;
+            }))
+            ->willReturn($responseMock2 = $this->createMock(PagedQueryResponse::class));
+
+        $responseMock2
+            ->expects(static::once())
+            ->method('toArray')
+            ->willReturn(['results' => []]);
+
+        self::assertSame($priceCollection, $fixture->setBatchSize(1)->loadPrices($userMock));
     }
 }

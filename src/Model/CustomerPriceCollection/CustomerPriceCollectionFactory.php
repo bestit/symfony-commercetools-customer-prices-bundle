@@ -9,9 +9,10 @@ use BestIt\CtCustomerPricesBundle\Model\CustomerPriceCollection;
 use Commercetools\Commons\Helper\QueryHelper;
 use Commercetools\Core\Client;
 use Commercetools\Core\Model\Common\Price;
-use Commercetools\Core\Model\CustomObject\CustomObject;
 use Commercetools\Core\Request\CustomObjects\CustomObjectQueryRequest;
+use Psr\Cache\CacheItemInterface;
 use Symfony\Component\Cache\Adapter\AdapterInterface;
+use Symfony\Component\Stopwatch\Stopwatch;
 
 /**
  * Loads a price list out of the custom objects for the given CustomerInterface-object.
@@ -34,19 +35,11 @@ class CustomerPriceCollectionFactory implements CustomerPriceCollectionFactoryIn
      * @var int
      */
     const DEFAULT_CACHE_TIME = 3600;
-    /**
-     * Array for given fields
-     *
-     * @var string
-     */
-    private $fields;
 
     /**
-     * The search query
-     *
-     * @var string
+     * @var int T
      */
-    private $query;
+    private $batchSize;
 
     /**
      * The used cache.
@@ -70,11 +63,30 @@ class CustomerPriceCollectionFactory implements CustomerPriceCollectionFactoryIn
     private $containerName;
 
     /**
+     * Array for given fields
+     *
+     * @var string
+     */
+    private $fields;
+
+    /**
+     * The search query
+     *
+     * @var string
+     */
+    private $query;
+
+    /**
      * Helper to execute queries.
      *
      * @var QueryHelper
      */
     private $queryHelper;
+
+    /**
+     * @var Stopwatch The used stop watch.
+     */
+    private $stopwatch;
 
     /**
      * ByUserFactory constructor.
@@ -84,7 +96,7 @@ class CustomerPriceCollectionFactory implements CustomerPriceCollectionFactoryIn
      * @param string $query
      * @param Client $client The used commercetools client.
      * @param string $containerName The customer object container to fetch.
-     * @param QueryHelper|null $queryHelper
+     * @param Stopwatch $stopwatch
      */
     public function __construct(
         AdapterInterface $cache,
@@ -92,7 +104,7 @@ class CustomerPriceCollectionFactory implements CustomerPriceCollectionFactoryIn
         string $query,
         Client $client,
         string $containerName,
-        QueryHelper $queryHelper = null
+        Stopwatch $stopwatch = null
     ) {
         $this->fields = $fields;
         $this->query = $query;
@@ -100,6 +112,122 @@ class CustomerPriceCollectionFactory implements CustomerPriceCollectionFactoryIn
         $this->client = $client;
         $this->containerName = $containerName;
         $this->queryHelper = $queryHelper ?? new QueryHelper();
+        $this->stopwatch = $this->stopwatch ?? new Stopwatch();
+
+        $this->setBatchSize(QueryHelper::DEFAULT_PAGE_SIZE);
+    }
+
+    /**
+     * Creates the query for the given customer.
+     *
+     * @param CustomerInterface $customer
+     *
+     * @return string
+     */
+    private function createQuery(CustomerInterface $customer): string
+    {
+        // Replace all *Field vars
+        $query = str_replace(
+            array_map(function ($key) {
+                return '{' . $key . 'Field}';
+            }, array_keys($this->fields)),
+            array_values($this->fields),
+            $this->query
+        );
+
+        // Replace all *Value vars
+        $variables = [
+            'customer' => $customer->getCustomerIdForArticlePrices(),
+            'currency' => $customer->getCustomerCurrencyForArticlePrices()
+        ];
+        $query = str_replace(
+            array_map(function ($key) {
+                return '{' . $key . 'Value}';
+            }, array_keys($variables)),
+            array_values($variables),
+            $query
+        );
+
+        // Replace other vars
+        return str_replace('{container}', $this->containerName, $query);
+    }
+
+    /**
+     * Fills the price collection by executing the query.
+     *
+     * @param string $query
+     *
+     * @return CustomerPriceCollection
+     */
+    private function fillCollectionByQuery(string $query): CustomerPriceCollection
+    {
+        $collection = new CustomerPriceCollection();
+        $request = (new CustomObjectQueryRequest())->where($query);
+
+        $batchCount = 1;
+        $batchSize = $this->getBatchSize();
+        $lastId = '';
+
+        $this->stopwatch->openSection();
+
+        do {
+            $this->stopwatch->start('load-batch.' . ($thisBatch = $batchCount++));
+
+            // The Query hepler from ct was the template.
+            $request->sort('id')->limit($batchSize)->withTotal(false);
+
+            if ($lastId) {
+                $request->where('id > "' . $lastId . '"');
+            }
+
+            $response = $this->client->execute($request);
+
+            if ($response->isError() || (!$results = $response->toArray()['results'])) {
+                break;
+            }
+
+            foreach ($results as $customObject) {
+                $lastId = $customObject['id'];
+
+                $collection->addWithArticleId(
+                    Price::fromArray($customObject['value'][$this->fields['prices']]),
+                    $customObject['value'][$this->fields['article']]
+                );
+            }
+
+            $this->stopwatch->stop('load-batch.' . $thisBatch);
+
+        } while ($results && count($results) >= $batchSize);
+
+        $this->stopwatch->stopSection(__METHOD__);
+
+        return $collection;
+    }
+
+    /**
+     * Writes the filled collection into the cache.
+     *
+     * @param CustomerInterface $customer
+     *
+     * @param $cacheItem
+     */
+    private function fillCollectionCache(CustomerInterface $customer, CacheItemInterface $cacheItem)
+    {
+        $query = $this->createQuery($customer);
+
+        $collection = $this->fillCollectionByQuery($query);
+
+        $this->cache->save($cacheItem->set($collection)->expiresAfter(self::DEFAULT_CACHE_TIME));
+    }
+
+    /**
+     * Returns the used batch size for custom object requests.
+     *
+     * @return int
+     */
+    public function getBatchSize(): int
+    {
+        return $this->batchSize;
     }
 
     /**
@@ -118,49 +246,23 @@ class CustomerPriceCollectionFactory implements CustomerPriceCollectionFactoryIn
         );
 
         if (!$cacheItem->isHit()) {
-            $collection = new CustomerPriceCollection();
-
-            // Replace all *Field vars
-            $query = str_replace(
-                array_map(function ($key) {
-                    return '{' . $key . 'Field}';
-                }, array_keys($this->fields)),
-                array_values($this->fields),
-                $this->query
-            );
-
-            // Replace all *Value vars
-            $variables = [
-                'customer' => $customer->getCustomerIdForArticlePrices(),
-                'currency' => $customer->getCustomerCurrencyForArticlePrices()
-            ];
-            $query = str_replace(
-                array_map(function ($key) {
-                    return '{' . $key . 'Value}';
-                }, array_keys($variables)),
-                array_values($variables),
-                $query
-            );
-
-            // Replace other vars
-            $query = str_replace('{container}', $this->containerName, $query);
-
-            $allPrices = $this
-                ->queryHelper->getAll(
-                    $this->client,
-                    (new CustomObjectQueryRequest())->where($query)
-                );
-
-            array_map(function (CustomObject $object) use ($collection) {
-                $collection->addWithArticleId(
-                    Price::fromArray($object->getValue()[$this->fields['prices']]),
-                    $object->getValue()[$this->fields['article']]
-                );
-            }, iterator_to_array($allPrices));
-
-            $this->cache->save($cacheItem->set($collection)->expiresAfter(self::DEFAULT_CACHE_TIME));
+            $this->fillCollectionCache($customer, $cacheItem);
         }
 
         return $cacheItem->get();
+    }
+
+    /**
+     * Sets the used batch size for custom object requests.
+     *
+     * @param int $batchSize
+     *
+     * @return $this
+     */
+    public function setBatchSize(int $batchSize)
+    {
+        $this->batchSize = $batchSize;
+
+        return $this;
     }
 }

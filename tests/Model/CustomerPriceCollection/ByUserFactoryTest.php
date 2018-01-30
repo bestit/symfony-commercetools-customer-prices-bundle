@@ -5,10 +5,12 @@ namespace Tests\BestIt\CtCustomerPricesBundle\CustomerPriceCollection;
 use BestIt\CtCustomerPricesBundle\Model\CustomerInterface;
 use BestIt\CtCustomerPricesBundle\Model\CustomerPriceCollection;
 use BestIt\CtCustomerPricesBundle\Model\CustomerPriceCollection\ByUserFactory;
-use BestIt\CtCustomerPricesBundle\Model\CustomerPriceCollection\CustomerPriceCollectionFactory;
+use Commercetools\Core\Client;
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
+use Psr\Cache\CacheItemInterface;
+use Symfony\Component\Cache\Adapter\AdapterInterface;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
+use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 
 /**
  * Test for ByUserFactory.
@@ -50,40 +52,71 @@ class ByUserFactoryTest extends TestCase
     /**
      * Test for createPriceCollection function.
      */
-    public function testCreatePriceCollectionWithoutUser()
+    public function testCreatePriceCollectionWithUser()
     {
         $fixture = new ByUserFactory(
-            $this->createMock(CustomerPriceCollectionFactory::class),
-            $this->createMock(TokenStorageInterface::class)
+            $cacheMock = $this->createMock(AdapterInterface::class),
+            $this->fields,
+            $this->query,
+            $this->createMock(Client::class),
+            $containerName = (string)random_int(1000, 9999),
+            null,
+            $tokenStorage = $this->createMock(TokenStorageInterface::class)
         );
 
-        self::assertInstanceOf(CustomerPriceCollection::class, $fixture->createPriceCollection());
+        $token = $this->createMock(TokenInterface::class);
+
+        $token
+            ->method('getUser')
+            ->willReturn($user = $this->createMock(CustomerInterface::class));
+
+        $tokenStorage
+            ->method('getToken')
+            ->willReturn($token);
+
+        $cacheMock
+            ->expects(static::once())
+            ->method('getItem')
+            ->with(($userId = uniqid()) . ($currency = uniqid()) . '-customer-prices')
+            ->willReturn($item = $this->createMock(CacheItemInterface::class));
+
+        $item
+            ->expects(static::once())
+            ->method('isHit')
+            ->willReturn(true);
+
+        $item
+            ->expects(static::once())
+            ->method('get')
+            ->willReturn($collection = $this->createMock(CustomerPriceCollection::class));
+
+        $user
+            ->expects(static::once())
+            ->method('getCustomerCurrencyForArticlePrices')
+            ->willReturn($currency);
+
+        $user
+            ->expects(static::once())
+            ->method('getCustomerIdForArticlePrices')
+            ->willReturn($userId);
+
+        self::assertSame($collection, $fixture->createPriceCollection());
     }
 
     /**
      * Test for createPriceCollection function.
      */
-    public function testCreatePriceCollectionWithUser()
+    public function testCreatePriceCollectionWithoutUser()
     {
         $fixture = new ByUserFactory(
-            $customerPriceCollectionFactory = $this->createMock(CustomerPriceCollectionFactory::class),
-            $tokenStorage = $this->createMock(TokenStorageInterface::class)
+            $cacheMock = $this->createMock(AdapterInterface::class),
+            $this->fields,
+            $this->query,
+            $clientMock = $this->createMock(Client::class),
+            $containerName = (string)random_int(1000, 9999),
+            null,
+            $this->createMock(TokenStorageInterface::class)
         );
-
-        $user = $this->createMock(CustomerInterface::class);
-
-        $token = $this->createMock(TokenInterface::class);
-        $token
-            ->method('getUser')
-            ->willReturn($user);
-
-        $tokenStorage
-            ->method('getToken')
-            ->willReturn($token);
-        $customerPriceCollectionFactory
-            ->method('loadPrices')
-            ->with($user)
-            ->willReturn(new CustomerPriceCollection());
 
         self::assertInstanceOf(CustomerPriceCollection::class, $fixture->createPriceCollection());
     }

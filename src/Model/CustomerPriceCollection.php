@@ -21,6 +21,11 @@ class CustomerPriceCollection extends PriceCollection
     const INDEX_KEY_ARTICLE_NO = 'articleNo';
 
     /**
+     * @var int Counter for the prices in this collection.
+     */
+    private $count = 0;
+
+    /**
      * Adds a price for the given article id.
      * @param Price $price The found price.
      * @param string $articleId The found article id.
@@ -30,7 +35,17 @@ class CustomerPriceCollection extends PriceCollection
         $this->add($price);
 
         // Offset-Calc like the original setAt
-        $this->addToIndex(self::INDEX_KEY_ARTICLE_NO, count($this) - 1, $articleId);
+        $this->addToIndex(self::INDEX_KEY_ARTICLE_NO, $this->count++, $articleId);
+    }
+
+    /**
+     * Returns the count of the prices in this collection.
+     * 
+     * @return int
+     */
+    public function count(): int
+    {
+        return $this->count ?: parent::count();
     }
 
     /**
