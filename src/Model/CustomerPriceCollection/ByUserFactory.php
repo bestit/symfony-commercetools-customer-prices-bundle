@@ -17,13 +17,8 @@ use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInt
  * @author blange <lange@bestit-online.de>
  * @package BestIt\CtCustomerPricesBundle\Model\CustomerPriceCollection
  */
-class ByUserFactory
+class ByUserFactory extends CustomerPriceCollectionFactory
 {
-    /**
-     * @var CustomerPriceCollectionFactory
-     */
-    private $customerPriceCollectionFactory;
-
     /**
      * Storage to get the authed user.
      *
@@ -34,14 +29,25 @@ class ByUserFactory
     /**
      * ByUserFactory constructor.
      *
-     * @param CustomerPriceCollectionFactory $customerPriceCollectionFactory
-     * @param TokenStorageInterface $tokenStorage Storage to get the authed user.
+     * @param AdapterInterface $cache The used cache.
+     * @param array $fields
+     * @param string $query
+     * @param Client $client The used commercetools client.
+     * @param string $containerName The customer object container to fetch.
+     * @param QueryHelper|null $queryHelper
+     * @param TokenStorageInterface $tokenStorage
      */
     public function __construct(
-        CustomerPriceCollectionFactory $customerPriceCollectionFactory,
+        AdapterInterface $cache,
+        array $fields,
+        string $query,
+        Client $client,
+        string $containerName,
+        QueryHelper $queryHelper = null,
         TokenStorageInterface $tokenStorage
     ) {
-        $this->customerPriceCollectionFactory = $customerPriceCollectionFactory;
+        parent::__construct($cache, $fields, $query, $client, $containerName, $queryHelper);
+
         $this->tokenStorage = $tokenStorage;
     }
 
@@ -55,7 +61,7 @@ class ByUserFactory
         $collection = new CustomerPriceCollection();
 
         if (($token = $this->tokenStorage->getToken()) && (($user = $token->getUser()) instanceof CustomerInterface)) {
-            $collection = $this->customerPriceCollectionFactory->loadPrices($user);
+            $collection = parent::loadPrices($user);
         }
 
         return $collection;

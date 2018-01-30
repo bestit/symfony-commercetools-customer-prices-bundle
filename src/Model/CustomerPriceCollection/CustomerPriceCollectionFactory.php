@@ -19,7 +19,7 @@ use Symfony\Component\Cache\Adapter\AdapterInterface;
  * @author andre.varelmann <andre.varelmann@bestit-online.de>
  * @package BestIt\CtCustomerPricesBundle\Model\CustomerPriceCollection
  */
-class CustomerPriceCollectionFactory
+class CustomerPriceCollectionFactory implements CustomerPriceCollectionFactoryInterface
 {
     /**
      * The cache suffix.
