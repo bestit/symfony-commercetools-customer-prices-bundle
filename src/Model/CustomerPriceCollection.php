@@ -9,13 +9,15 @@ use Commercetools\Core\Model\Common\PriceCollection;
 
 /**
  * Collects special article prices.
+ *
  * @author blange <lange@bestit-online.de>
- * @package BestIt\CtCustomerPricesBundle
+ * @package BestIt\CtCustomerPricesBundle\Model
  */
 class CustomerPriceCollection extends PriceCollection
 {
     /**
      * The key for the special index sorted by the article id.
+     *
      * @var string
      */
     const INDEX_KEY_ARTICLE_NO = 'articleNo';
@@ -27,8 +29,11 @@ class CustomerPriceCollection extends PriceCollection
 
     /**
      * Adds a price for the given article id.
+     *
      * @param Price $price The found price.
      * @param string $articleId The found article id.
+     *
+     * @return void
      */
     public function addWithArticleId(Price $price, string $articleId)
     {
@@ -40,7 +45,7 @@ class CustomerPriceCollection extends PriceCollection
 
     /**
      * Returns the count of the prices in this collection.
-     * 
+     *
      * @return int
      */
     public function count(): int
@@ -50,7 +55,9 @@ class CustomerPriceCollection extends PriceCollection
 
     /**
      * Returns the price by its currency.
+     *
      * @param string $articleId The search article id.
+     *
      * @return Price|null
      */
     public function getByArticle(string $articleId)

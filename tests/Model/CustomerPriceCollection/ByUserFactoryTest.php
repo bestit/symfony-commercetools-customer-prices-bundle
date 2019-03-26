@@ -6,6 +6,7 @@ use BestIt\CtCustomerPricesBundle\Model\CustomerInterface;
 use BestIt\CtCustomerPricesBundle\Model\CustomerPriceCollection;
 use BestIt\CtCustomerPricesBundle\Model\CustomerPriceCollection\ByUserFactory;
 use Commercetools\Core\Client;
+use Exception;
 use PHPUnit\Framework\TestCase;
 use Psr\Cache\CacheItemInterface;
 use Symfony\Component\Cache\Adapter\AdapterInterface;
@@ -35,7 +36,11 @@ class ByUserFactoryTest extends TestCase
     private $query;
 
     /**
-     * {@inheritdoc}
+     * Defines the query and fields.
+     *
+     * @throws Exception
+     *
+     * @return void
      */
     protected function setUp()
     {
@@ -51,6 +56,8 @@ class ByUserFactoryTest extends TestCase
 
     /**
      * Test for createPriceCollection function.
+     *
+     * @return void
      */
     public function testCreatePriceCollectionWithUser()
     {
@@ -59,7 +66,7 @@ class ByUserFactoryTest extends TestCase
             $this->fields,
             $this->query,
             $this->createMock(Client::class),
-            $containerName = (string)random_int(1000, 9999),
+            $containerName = (string) random_int(1000, 9999),
             null,
             $tokenStorage = $this->createMock(TokenStorageInterface::class)
         );
@@ -105,6 +112,8 @@ class ByUserFactoryTest extends TestCase
 
     /**
      * Test for createPriceCollection function.
+     *
+     * @return void
      */
     public function testCreatePriceCollectionWithoutUser()
     {
@@ -113,7 +122,7 @@ class ByUserFactoryTest extends TestCase
             $this->fields,
             $this->query,
             $clientMock = $this->createMock(Client::class),
-            $containerName = (string)random_int(1000, 9999),
+            $containerName = (string) random_int(1000, 9999),
             null,
             $this->createMock(TokenStorageInterface::class)
         );

@@ -42,6 +42,8 @@ class BestItCtCustomerPricesExtensionTest extends AbstractExtensionTestCase
 
     /**
      * Set up the test.
+     *
+     * @return void
      */
     protected function setUp()
     {

@@ -18,14 +18,17 @@ class ConfigurationTest extends TestCase
 
     /**
      * Get bundle configuration.
+     *
      */
-    protected function getConfiguration()
+    protected function getConfiguration(): Configuration
     {
         return new Configuration();
     }
 
     /**
      * Test the configuration.
+     *
+     * @return void
      */
     public function testConfiguration()
     {

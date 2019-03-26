@@ -56,7 +56,7 @@ class ByUserFactory extends CustomerPriceCollectionFactory
      *
      * @return CustomerPriceCollection
      */
-    public function createPriceCollection()
+    public function createPriceCollection(): CustomerPriceCollection
     {
         $collection = new CustomerPriceCollection();
 

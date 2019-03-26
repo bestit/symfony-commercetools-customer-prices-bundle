@@ -170,11 +170,10 @@ class CustomerPriceCollectionFactory implements CustomerPriceCollectionFactoryIn
 
         $this->stopwatch->openSection();
 
+        $request->sort('id')->limit($batchSize)->withTotal(false);
+
         do {
             $this->stopwatch->start('load-batch.' . ($thisBatch = $batchCount++));
-
-            // The Query hepler from ct was the template.
-            $request->sort('id')->limit($batchSize)->withTotal(false);
 
             if ($lastId) {
                 $request->where('id > "' . $lastId . '"');
@@ -196,7 +195,6 @@ class CustomerPriceCollectionFactory implements CustomerPriceCollectionFactoryIn
             }
 
             $this->stopwatch->stop('load-batch.' . $thisBatch);
-
         } while ($results && count($results) >= $batchSize);
 
         $this->stopwatch->stopSection(__METHOD__);
@@ -208,8 +206,9 @@ class CustomerPriceCollectionFactory implements CustomerPriceCollectionFactoryIn
      * Writes the filled collection into the cache.
      *
      * @param CustomerInterface $customer
+     * @param CacheItemInterface $cacheItem
      *
-     * @param $cacheItem
+     * @return void
      */
     private function fillCollectionCache(CustomerInterface $customer, CacheItemInterface $cacheItem)
     {
@@ -259,7 +258,7 @@ class CustomerPriceCollectionFactory implements CustomerPriceCollectionFactoryIn
      *
      * @return $this
      */
-    public function setBatchSize(int $batchSize)
+    public function setBatchSize(int $batchSize): CustomerPriceCollectionFactoryInterface
     {
         $this->batchSize = $batchSize;
 

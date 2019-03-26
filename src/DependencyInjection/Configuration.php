@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace BestIt\CtCustomerPricesBundle\DependencyInjection;
 
+use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
-use \Symfony\Component\Config\Definition\Builder\TreeBuilder;
 
 /**
  * Configures the bundle.
+ *
  * @author blange <lange@bestit-online.de>
  * @package BestIt\CtCustomerPricesBundle\DependencyInjection
  */

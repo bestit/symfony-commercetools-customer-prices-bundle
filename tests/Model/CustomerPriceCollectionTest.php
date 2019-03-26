@@ -16,6 +16,8 @@ class CustomerPriceCollectionTest extends TestCase
 {
     /**
      * Test addWithArticleId function.
+     *
+     * @return void
      */
     public function testAddAndGetWithArticleId()
     {

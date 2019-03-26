@@ -16,6 +16,8 @@ class CustomerPriceCollectionAwareTraitTest extends TestCase
 {
     /**
      * Test getter and setter.
+     *
+     * @return void
      */
     public function testTrait()
     {

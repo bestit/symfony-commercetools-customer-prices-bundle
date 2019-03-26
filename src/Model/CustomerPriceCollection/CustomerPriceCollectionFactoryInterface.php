@@ -31,5 +31,5 @@ interface CustomerPriceCollectionFactoryInterface
      *
      * @return $this
      */
-    public function setBatchSize(int $batchSize);
+    public function setBatchSize(int $batchSize): self;
 }

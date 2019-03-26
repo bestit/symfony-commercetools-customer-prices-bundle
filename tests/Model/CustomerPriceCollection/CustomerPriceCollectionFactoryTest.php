@@ -10,6 +10,7 @@ use Commercetools\Core\Client;
 use Commercetools\Core\Model\CustomObject\CustomObject;
 use Commercetools\Core\Request\CustomObjects\CustomObjectQueryRequest;
 use Commercetools\Core\Response\PagedQueryResponse;
+use Exception;
 use PHPUnit\Framework\TestCase;
 use Psr\Cache\CacheItemInterface;
 use Symfony\Component\Cache\Adapter\AdapterInterface;
@@ -37,7 +38,11 @@ class CustomerPriceCollectionFactoryTest extends TestCase
     private $query;
 
     /**
-     * {@inheritdoc}
+     * Defines the query and the fields.
+     *
+     * @throws Exception
+     *
+     * @return void
      */
     protected function setUp()
     {
@@ -63,7 +68,7 @@ class CustomerPriceCollectionFactoryTest extends TestCase
             $this->fields,
             $this->query,
             $this->createMock(Client::class),
-            (string)random_int(1000, 9999)
+            (string) random_int(1000, 9999)
         );
 
         static::assertSame(QueryHelper::DEFAULT_PAGE_SIZE, $fixture->getBatchSize());
@@ -71,6 +76,8 @@ class CustomerPriceCollectionFactoryTest extends TestCase
 
     /**
      * Test to load prices from cache function.
+     *
+     * @return void
      */
     public function testLoadCachedPrices()
     {
@@ -79,7 +86,7 @@ class CustomerPriceCollectionFactoryTest extends TestCase
             $this->fields,
             $this->query,
             $clientMock = $this->createMock(Client::class),
-            $containerName = (string)random_int(1000, 9999)
+            $containerName = (string) random_int(1000, 9999)
         );
 
         $priceCollectionMock = $this->createMock(CustomerPriceCollection::class);
@@ -99,10 +106,10 @@ class CustomerPriceCollectionFactoryTest extends TestCase
         $userMock = $this->createMock(CustomerInterface::class);
         $userMock
             ->method('getCustomerIdForArticlePrices')
-            ->willReturn($customerId = (string)random_int(1000, 9999));
+            ->willReturn($customerId = (string) random_int(1000, 9999));
         $userMock
             ->method('getCustomerCurrencyForArticlePrices')
-            ->willReturn($currency = (string)random_int(1000, 9999));
+            ->willReturn($currency = (string) random_int(1000, 9999));
 
         self::assertSame($priceCollectionMock, $fixture->loadPrices($userMock));
     }
@@ -119,7 +126,7 @@ class CustomerPriceCollectionFactoryTest extends TestCase
             $this->fields,
             $this->query,
             $clientMock = $this->createMock(Client::class),
-            $containerName = (string)random_int(1000, 9999)
+            $containerName = (string) random_int(1000, 9999)
         );
 
         $cacheItemMock = $this->createMock(CacheItemInterface::class);
@@ -158,11 +165,11 @@ class CustomerPriceCollectionFactoryTest extends TestCase
 
         $userMock
             ->method('getCustomerIdForArticlePrices')
-            ->willReturn($customerId = (string)random_int(1000, 9999));
+            ->willReturn($customerId = (string) random_int(1000, 9999));
 
         $userMock
             ->method('getCustomerCurrencyForArticlePrices')
-            ->willReturn($currency = (string)random_int(1000, 9999));
+            ->willReturn($currency = (string) random_int(1000, 9999));
 
         $customObject = CustomObject::fromArray([
             'id' => $firstObjectId = uniqid(),

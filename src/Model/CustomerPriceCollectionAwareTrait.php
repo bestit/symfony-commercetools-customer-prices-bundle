@@ -33,6 +33,7 @@ trait CustomerPriceCollectionAwareTrait
      * Sets the collection of the customer prices.
      *
      * @param CustomerPriceCollection $customerPriceCollection
+     *
      * @return $this
      */
     public function setCustomerPriceCollection(CustomerPriceCollection $customerPriceCollection): self

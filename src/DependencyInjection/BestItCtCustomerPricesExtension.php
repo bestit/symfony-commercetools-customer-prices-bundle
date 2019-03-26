@@ -9,6 +9,7 @@ use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
 
 /**
  * Loads the config for the app bundle.
+ *
  * @author lange <lange@bestit-online.de>
  * @package BestIt\CtCustomerPricesBundle\DependencyInjection
  */
@@ -16,8 +17,10 @@ class BestItCtCustomerPricesExtension extends Extension
 {
     /**
      * Loads the bundle config.
+     *
      * @param array $configs
      * @param ContainerBuilder $container
+     *
      * @return void
      */
     public function load(array $configs, ContainerBuilder $container)
